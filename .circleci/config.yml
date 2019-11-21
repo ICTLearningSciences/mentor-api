@@ -8,6 +8,17 @@ aliases:
   - &only-untagged
     tags:
       ignore: /.*/
+  - &git-lfs-install
+    run:
+      name: Git lfs install
+      command: |
+        curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash \
+          && sudo apt-get install -y git-lfs \
+          && git lfs install
+  - &git-lfs-pull
+    run:
+      name: Git lfs pull
+      command: git lfs pull
 executors:
   python:
     docker:
@@ -35,6 +46,19 @@ jobs:
       - setup_remote_docker:
           docker_layer_caching: true
       - checkout
+      - run:
+          name: Run tests
+          command: make test-units
+  test-image:
+    executor: python
+    steps:
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - *git-lfs-install
+      - checkout
+      # MUST pull git lfs before building this test image or the vector-model 
+      # will be a stub and tests will fail in a hard-to-track-down way
+      - *git-lfs-pull
       - run:
           name: Run tests
           command: make test-image
@@ -84,14 +108,17 @@ workflows:
           filters: *only-untagged
       - test:
           filters: *only-untagged
+      - test-image:
+          filters: *only-untagged
           requires:
             - test-format
             - test-lint
+            - test
       - approve-build-and-push:
           filters: *only-untagged
           type: approval
           requires:
-            - test
+            - test-image
       - build-and-push:
           is-release-tag: false
           filters: *only-untagged
@@ -105,12 +132,15 @@ workflows:
           filters: *only-tagged-releases
       - test:
           filters: *only-tagged-releases
+      - test-image:
+          filters: *only-tagged-releases
           requires:
             - test-format
             - test-lint
+            - test
       - build-and-push:
           is-release-tag: true
           filters: *only-tagged-releases
           requires:
-            - test
+            - test-image
 
