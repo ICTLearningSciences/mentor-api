@@ -35,7 +35,7 @@ jobs:
       - checkout
       - run:
           name: Run tests
-          command: make test
+          command: make test-image
   build-and-push:
     parameters:
       is-release-tag:

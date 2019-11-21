@@ -1,4 +1,4 @@
-SHELL:=/bin/bash
+BLACK_EXCLUDES="/(\.venv|build)/"
 DOCKER_CONTAINER?=mentor-api
 PWD=$(shell pwd)
 PROJECT_ROOT?=$(shell git rev-parse --show-toplevel 2> /dev/null)
@@ -8,6 +8,11 @@ DOCKER_BASE_IMAGE?=uscictdocker/mentor-classifier:1.0.0
 DOCKER_IMAGE?=mentor-api
 DOCKER_IMAGE_ID=$(shell docker images -q ${DOCKER_IMAGE} 2> /dev/null)
 TEST_IMAGE?=mentor-api-test
+
+VENV=.venv
+VENV_PIP=$(VENV)/bin/pip
+$(VENV):
+	$(MAKE) test-env-create
 
 virtualenv-installed:
 	$(PROJECT_ROOT)/bin/virtualenv_ensure_installed.sh
@@ -91,18 +96,25 @@ exec-shell:
 		$(DOCKER_CONTAINER) \
 			bash
 
-VENV=.venv
-VENV_PIP=$(VENV)/bin/pip
-$(VENV):
-	$(MAKE) test-env-create
+.PHONY: format
+format: $(VENV)
+	$(VENV)/bin/black --exclude $(BLACK_EXCLUDES) .
 
 .PHONY: test-env-create
 test-env-create: virtualenv-installed
 	[ -d $(VENV) ] || virtualenv -p python3 $(VENV)
 	$(VENV_PIP) install --upgrade pip
 	$(VENV_PIP) install -r requirements.txt
-	$(VENV_PIP) install -r tests/requirements.txt
-	$(VENV_PIP) install -r tests/requirements-p2.txt
+	$(VENV_PIP) install -r requirements.test.txt
+	$(VENV_PIP) install -r requirements.test.p2.txt
+
+.PHONY: test-format-python
+test-format: $(VENV)
+	$(VENV)/bin/black --check --exclude $(BLACK_EXCLUDES) .
+
+.PHONY: test-lint
+test-lint: $(VENV)
+	$(VENV)/bin/flake8 .
 
 .PHONY: test-units
 test-units: $(VENV)

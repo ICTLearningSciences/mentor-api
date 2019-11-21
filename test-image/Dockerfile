@@ -6,12 +6,11 @@ RUN apt-get update \
 RUN pip install virtualenv
 ENV VIRTUAL_ENV=/test/.venv
 COPY build /test
-RUN cd /test && \
-    virtualenv -p python3 ${VIRTUAL_ENV} && \
-    ${VIRTUAL_ENV}/bin/pip install --upgrade pip && \
-    ${VIRTUAL_ENV}/bin/pip install -r tests/requirements.txt && \
-    ${VIRTUAL_ENV}/bin/pip install -r behave-restful/requirements.txt && \
-    ${VIRTUAL_ENV}/bin/pip install -e behave-restful
+RUN cd /test \
+    && virtualenv -p python3 ${VIRTUAL_ENV} \
+    && ${VIRTUAL_ENV}/bin/pip install --upgrade pip \
+    && ${VIRTUAL_ENV}/bin/pip install -r requirements.test.txt \
+    && ${VIRTUAL_ENV}/bin/pip install -r requirements.test.p2.txt
 COPY build/tests/resources/checkpoint /app/checkpoint
 COPY build/tests/resources/mentors /app/mentors
 ENV PATH="${VIRTUAL_ENV}/bin:$PATH"

@@ -1,5 +1,7 @@
 assertpy
 behave==1.2.6
+black==19.3b0
+flake8==3.7.7
 m2r==0.2.1
 pytest==5.2.0
 pytest-mock==1.11.0
