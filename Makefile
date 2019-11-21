@@ -91,39 +91,30 @@ exec-shell:
 		$(DOCKER_CONTAINER) \
 			bash
 
-BEHAVE_RESTFUL=$(PROJECT_ROOT)/behave-restful
-$(BEHAVE_RESTFUL)/setup.py:
-	@echo "initializing submodule behave-restful..."
-	cd $(PROJECT_ROOT) && \
-        git submodule init && \
-        git submodule update --remote 
-
-
-TEST_VIRTUAL_ENV=.venv
-TEST_VIRTUAL_ENV_PIP=$(TEST_VIRTUAL_ENV)/bin/pip
-$(TEST_VIRTUAL_ENV):
+VENV=.venv
+VENV_PIP=$(VENV)/bin/pip
+$(VENV):
 	$(MAKE) test-env-create
 
-.PHONY: dev-env-create
-test-env-create: $(PROJECT_ROOT)/behave-restful/setup.py virtualenv-installed
-	[ -d $(TEST_VIRTUAL_ENV) ] || virtualenv -p python3 $(TEST_VIRTUAL_ENV)
-	$(TEST_VIRTUAL_ENV_PIP) install --upgrade pip
-	$(TEST_VIRTUAL_ENV_PIP) install -r requirements.txt
-	$(TEST_VIRTUAL_ENV_PIP) install -r tests/requirements.txt
-	$(TEST_VIRTUAL_ENV_PIP) install -r $(BEHAVE_RESTFUL)/requirements.txt && \
-	$(TEST_VIRTUAL_ENV_PIP) install -e $(BEHAVE_RESTFUL)
+.PHONY: test-env-create
+test-env-create: virtualenv-installed
+	[ -d $(VENV) ] || virtualenv -p python3 $(VENV)
+	$(VENV_PIP) install --upgrade pip
+	$(VENV_PIP) install -r requirements.txt
+	$(VENV_PIP) install -r tests/requirements.txt
+	$(VENV_PIP) install -r tests/requirements-p2.txt
 
 .PHONY: test-units
-test-units: $(TEST_VIRTUAL_ENV)
-	source $(TEST_VIRTUAL_ENV)/bin/activate \
-		&& export PYTHONPATH=$${PYTHONPATH}:$(PROJECT_ROOT)/services/mentor-api/src \
-		&& export CLASSIFIER_CHECKPOINT_ROOT=$(PROJECT_ROOT)/checkpoint \
-		&& $(TEST_VIRTUAL_ENV)/bin/py.test -vv
+test-units: $(VENV)
+	. $(VENV)/bin/activate \
+		&& export PYTHONPATH=$${PYTHONPATH}:$(PROJECT_ROOT)/src \
+		&& export CLASSIFIER_CHECKPOINT_ROOT=$(RESOURCE_ROOT)/checkpoint \
+		&& $(VENV)/bin/py.test -vv
 
 
 .PHONY: test-integrations
-test-integrations: $(TEST_VIRTUAL_ENV) docker-image-exists
-	source $(TEST_VIRTUAL_ENV)/bin/activate \
+test-integrations: $(VENV) docker-image-exists
+	. $(VENV)/bin/activate \
 		&& cd tests \
 		&& export DOCKER_IMAGE=$(DOCKER_IMAGE) \
 		&& export USE_MOUNTED_DATA=1 \
