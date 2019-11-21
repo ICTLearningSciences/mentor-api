@@ -84,13 +84,14 @@ workflows:
           filters: *only-untagged
       - test:
           filters: *only-untagged
+          requires:
+            - test-format
+            - test-lint
       - approve-build-and-push:
           filters: *only-untagged
           type: approval
           requires:
             - test
-            - test-format
-            - test-lint
       - build-and-push:
           is-release-tag: false
           filters: *only-untagged
@@ -98,17 +99,18 @@ workflows:
             - approve-build-and-push
   test-build-deploy-release:
     jobs:
-      - test:
-          filters: *only-tagged-releases
       - test-format:
           filters: *only-tagged-releases
       - test-lint:
           filters: *only-tagged-releases
+      - test:
+          filters: *only-tagged-releases
+          requires:
+            - test-format
+            - test-lint
       - build-and-push:
           is-release-tag: true
           filters: *only-tagged-releases
           requires:
             - test
-            - test-format
-            - test-lint
 
