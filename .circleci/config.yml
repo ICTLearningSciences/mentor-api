@@ -1,0 +1,151 @@
+version: 2.1
+aliases:
+  - &only-tagged-releases
+    tags:
+      only: /^\d+\.\d+\.\d+(-[a-z\d\-.]+)?$/
+    branches:
+      ignore: /.*/
+  - &only-untagged
+    tags:
+      ignore: /.*/
+  - &git-lfs-install
+    run:
+      name: Git lfs install
+      command: |
+        curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash \
+          && sudo apt-get install -y git-lfs \
+          && git lfs install
+  - &git-lfs-pull
+    run:
+      name: Git lfs pull
+      command: git lfs pull
+executors:
+  python:
+    docker:
+      - image: circleci/python:3.6.9
+orbs:
+  docker: circleci/docker@0.5.17
+jobs:
+  test-format:
+    executor: python
+    steps:
+      - checkout
+      - run:
+          name: Test format for python
+          command: make test-format
+  test-lint:
+    executor: python
+    steps:
+      - checkout
+      - run:
+          name: Test lint for python
+          command: make test-lint
+  test:
+    executor: python
+    steps:
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - checkout
+      - run:
+          name: Run tests
+          command: make test-units
+  test-image:
+    executor: python
+    steps:
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - *git-lfs-install
+      - checkout
+      # MUST pull git lfs before building this test image or the vector-model 
+      # will be a stub and tests will fail in a hard-to-track-down way
+      - *git-lfs-pull
+      - run:
+          name: Run tests
+          command: make test-image
+  build-and-push:
+    parameters:
+      is-release-tag:
+        type: boolean
+        default: false
+    executor: docker/docker
+    steps:
+      - unless:
+          condition: <<parameters.is-release-tag>>
+          steps:
+            - run: 
+                name: "set image tag to commit sha"
+                command: |
+                  echo 'export IMAGE_TAG="$CIRCLE_SHA1"' >> $BASH_ENV
+      - when:
+          condition: <<parameters.is-release-tag>>
+          steps:
+            - run: 
+                name: "override image tag to release tag"
+                command: |
+                  echo 'export IMAGE_TAG="$CIRCLE_TAG"' >> $BASH_ENV
+      - run:
+          name: report tag
+          command: echo "building tag uscictdocker/mentor-api:${IMAGE_TAG}..."
+      - setup_remote_docker
+      - checkout
+      - docker/check
+      - run:
+          name: Docker build
+          command: |
+            DOCKER_IMAGE=uscictdocker/mentor-api:${IMAGE_TAG} \
+            make docker-build
+      # - docker/build:
+      #     image: uscictdocker/mentor-api
+      #     tag: ${IMAGE_TAG}
+      - docker/push:
+          digest-path: /tmp/digest.txt
+          image: uscictdocker/mentor-api
+          tag: ${IMAGE_TAG}
+      - run:
+          command: |
+            echo "Digest is: $(</tmp/digest.txt)"
+workflows:
+  test-build-deploy:
+    jobs:
+      - test-format:
+          filters: *only-untagged
+      - test-lint:
+          filters: *only-untagged
+      - test:
+          filters: *only-untagged
+      - test-image:
+          filters: *only-untagged
+          requires:
+            - test-format
+            - test-lint
+            - test
+      - approve-build-and-push:
+          filters: *only-untagged
+          type: approval
+          requires:
+            - test-image
+      - build-and-push:
+          is-release-tag: false
+          filters: *only-untagged
+          requires:
+            - approve-build-and-push
+  test-build-deploy-release:
+    jobs:
+      - test-format:
+          filters: *only-tagged-releases
+      - test-lint:
+          filters: *only-tagged-releases
+      - test:
+          filters: *only-tagged-releases
+      - test-image:
+          filters: *only-tagged-releases
+          requires:
+            - test-format
+            - test-lint
+            - test
+      - build-and-push:
+          is-release-tag: true
+          filters: *only-tagged-releases
+          requires:
+            - test-image
+
