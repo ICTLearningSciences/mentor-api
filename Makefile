@@ -152,3 +152,22 @@ test-image:
 		MENTOR_API_IMAGE=$(DOCKER_IMAGE) \
 		TEST_IMAGE=$(TEST_IMAGE) \
 		$(MAKE) test
+
+LICENSE:
+	@echo "you must have a LICENSE file" 1>&2
+	exit 1
+
+LICENSE_HEADER:
+	@echo "you must have a LICENSE_HEADER file" 1>&2
+	exit 1
+
+.PHONY: license
+license: LICENSE LICENSE_HEADER node_modules/license-check-and-add
+	npm run license:fix
+
+.PHONY: test-license
+test-license: LICENSE LICENSE_HEADER node_modules/license-check-and-add
+	npm run test:license
+
+node_modules/license-check-and-add:
+	npm ci
