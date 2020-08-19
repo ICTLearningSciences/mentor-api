@@ -1,9 +1,0 @@
-# Ignore everything
-*
-.venv/*
-
-# But not these files...
-!/src/*.py
-!/src/*/*.py
-!/tests/*.py
-!/tests/*/*.py

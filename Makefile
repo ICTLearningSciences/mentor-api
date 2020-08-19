@@ -17,6 +17,10 @@ $(VENV):
 virtualenv-installed:
 	$(PROJECT_ROOT)/bin/virtualenv_ensure_installed.sh
 
+.PHONY clean:
+clean:
+	rm -rf .venv
+
 .PHONY: docker-build
 docker-build:
 	docker build \
@@ -162,12 +166,11 @@ LICENSE_HEADER:
 	exit 1
 
 .PHONY: license
-license: LICENSE LICENSE_HEADER node_modules/license-check-and-add
-	npm run license:fix
+license: LICENSE LICENSE_HEADER $(VENV)
+	$(VENV)/bin/python3 -m licenseheaders -t LICENSE_HEADER -d tests
+	$(VENV)/bin/python3 -m licenseheaders -t LICENSE_HEADER -d opentutor_classifier
 
 .PHONY: test-license
-test-license: LICENSE LICENSE_HEADER node_modules/license-check-and-add
-	npm run test:license
-
-node_modules/license-check-and-add:
-	npm ci
+test-license: LICENSE LICENSE_HEADER $(VENV)
+	$(VENV)/bin/python3 -m licenseheaders -t LICENSE_HEADER -d tests --check
+	$(VENV)/bin/python3 -m licenseheaders -t LICENSE_HEADER -d opentutor_classifier --check
