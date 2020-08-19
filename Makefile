@@ -17,6 +17,10 @@ $(VENV):
 virtualenv-installed:
 	$(PROJECT_ROOT)/bin/virtualenv_ensure_installed.sh
 
+.PHONY clean:
+clean:
+	rm -rf .venv
+
 .PHONY: docker-build
 docker-build:
 	docker build \
@@ -152,3 +156,21 @@ test-image:
 		MENTOR_API_IMAGE=$(DOCKER_IMAGE) \
 		TEST_IMAGE=$(TEST_IMAGE) \
 		$(MAKE) test
+
+LICENSE:
+	@echo "you must have a LICENSE file" 1>&2
+	exit 1
+
+LICENSE_HEADER:
+	@echo "you must have a LICENSE_HEADER file" 1>&2
+	exit 1
+
+.PHONY: license
+license: LICENSE LICENSE_HEADER $(VENV)
+	$(VENV)/bin/python3 -m licenseheaders -t LICENSE_HEADER -d tests
+	$(VENV)/bin/python3 -m licenseheaders -t LICENSE_HEADER -d opentutor_classifier
+
+.PHONY: test-license
+test-license: LICENSE LICENSE_HEADER $(VENV)
+	$(VENV)/bin/python3 -m licenseheaders -t LICENSE_HEADER -d tests --check
+	$(VENV)/bin/python3 -m licenseheaders -t LICENSE_HEADER -d opentutor_classifier --check

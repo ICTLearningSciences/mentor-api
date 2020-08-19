@@ -40,6 +40,13 @@ jobs:
       - run:
           name: Test lint for python
           command: make test-lint
+  test-license:
+    executor: python
+    steps:
+      - checkout
+      - run:
+          name: Test license
+          command: make test-license
   test:
     executor: python
     steps:
@@ -111,6 +118,8 @@ workflows:
           filters: *only-untagged
       - test-lint:
           filters: *only-untagged
+      - test-license:
+          filters: *only-untagged
       - test:
           filters: *only-untagged
       - test-image:
@@ -118,6 +127,7 @@ workflows:
           requires:
             - test-format
             - test-lint
+            - test-license
             - test
       - approve-build-and-push:
           filters: *only-untagged
@@ -135,6 +145,8 @@ workflows:
           filters: *only-tagged-releases
       - test-lint:
           filters: *only-tagged-releases
+      - test-license:
+          filters: *only-tagged-releases
       - test:
           filters: *only-tagged-releases
       - test-image:
@@ -142,6 +154,7 @@ workflows:
           requires:
             - test-format
             - test-lint
+            - test-license
             - test
       - build-and-push:
           is-release-tag: true
