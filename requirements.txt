@@ -3,3 +3,4 @@ Flask-Cors==3.0.9
 gunicorn==20.0.4
 git+https://github.com/ICTLearningSciences/mentor-classifier.git@1.0.1
 licenseheaders @ git+http://github.com/kycarr/licenseheaders.git@master#egg=licenseheaders
+python-dotenv==0.14.0
