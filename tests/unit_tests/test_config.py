@@ -6,8 +6,7 @@
 #
 
 
-def test_it_returns_pong_response(client):
-    res = client.get("/mentor-api/ping")
+def test_config_video_returns_default(client):
+    res = client.get("/mentor-api/config/video-host")
     assert res.status_code == 200
-    assert res.json.get("message") == "pong!"
-    assert res.json.get("status") == "success"
+    assert res.json.get("url") == "https://video.mentorpal.org"
