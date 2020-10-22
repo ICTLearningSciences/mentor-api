@@ -29,6 +29,9 @@ virtualenv-installed:
 clean:
 	rm -rf $(VENV)
 
+deps-update: $(VENV)
+	. $(VENV)/bin/activate && pip-upgrade requirements*
+
 .PHONY: docker-build
 docker-build:
 	docker build \
@@ -125,7 +128,7 @@ test-units: $(VENV)
 	. $(VENV)/bin/activate \
 		&& export PYTHONPATH=$${PYTHONPATH}:$(PROJECT_ROOT)/src \
 		&& export CLASSIFIER_CHECKPOINT_ROOT=$(RESOURCE_ROOT)/checkpoint \
-		&& $(VENV)/bin/py.test -vv
+		&& $(VENV)/bin/py.test -vv $(args)
 
 
 .PHONY: test-integrations
