@@ -10,3 +10,10 @@ def test_config_video_returns_default(client):
     res = client.get("/mentor-api/config/video-host")
     assert res.status_code == 200
     assert res.json.get("url") == "https://video.mentorpal.org"
+
+
+def test_config_video_returns_env_override(client, monkeypatch):
+    monkeypatch.setenv("MENTOR_VIDEO_HOST", "https://dev.video.mentorpal.org")
+    res = client.get("/mentor-api/config/video-host")
+    assert res.status_code == 200
+    assert res.json.get("url") == "https://dev.video.mentorpal.org"

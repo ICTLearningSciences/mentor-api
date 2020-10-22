@@ -34,7 +34,7 @@ def create_app(script_info=None):
     app = Flask(__name__)
     # enable CORS
     CORS(app)
-    app.config.from_object(Config)
+    app.config.from_object(Config())
     config_path = os.environ.get("MENTORPAL_CLASSIFIER_API_SETTINGS")
     if not config_path:
         print(
