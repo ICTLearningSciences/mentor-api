@@ -12,14 +12,25 @@ TEST_IMAGE?=mentor-api-test
 VENV=.venv
 VENV_PIP=$(VENV)/bin/pip
 $(VENV):
-	$(MAKE) test-env-create
+	$(MAKE) $(VENV)-update
+
+.PHONY: $(VENV)-update
+$(VENV)-update: virtualenv-installed
+	[ -d $(VENV) ] || virtualenv -p python3.6 $(VENV)
+	$(VENV_PIP) install --upgrade pip
+	$(VENV_PIP) install -r requirements.txt
+	$(VENV_PIP) install -r requirements.test.txt
+	$(VENV_PIP) install -r requirements.test.p2.txt
 
 virtualenv-installed:
 	$(PROJECT_ROOT)/bin/virtualenv_ensure_installed.sh
 
 .PHONY clean:
 clean:
-	rm -rf .venv
+	rm -rf $(VENV)
+
+deps-update: $(VENV)
+	. $(VENV)/bin/activate && pip-upgrade requirements*
 
 .PHONY: docker-build
 docker-build:
@@ -104,14 +115,6 @@ exec-shell:
 format: $(VENV)
 	$(VENV)/bin/black --exclude $(BLACK_EXCLUDES) .
 
-.PHONY: test-env-create
-test-env-create: virtualenv-installed
-	[ -d $(VENV) ] || virtualenv -p python3 $(VENV)
-	$(VENV_PIP) install --upgrade pip
-	$(VENV_PIP) install -r requirements.txt
-	$(VENV_PIP) install -r requirements.test.txt
-	$(VENV_PIP) install -r requirements.test.p2.txt
-
 .PHONY: test-format-python
 test-format: $(VENV)
 	$(VENV)/bin/black --check --exclude $(BLACK_EXCLUDES) .
@@ -125,7 +128,7 @@ test-units: $(VENV)
 	. $(VENV)/bin/activate \
 		&& export PYTHONPATH=$${PYTHONPATH}:$(PROJECT_ROOT)/src \
 		&& export CLASSIFIER_CHECKPOINT_ROOT=$(RESOURCE_ROOT)/checkpoint \
-		&& $(VENV)/bin/py.test -vv
+		&& $(VENV)/bin/py.test -vv $(args)
 
 
 .PHONY: test-integrations
