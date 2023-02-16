@@ -11,4 +11,4 @@ pytest-env==0.6.2
 pytest-flask==1.0.0
 pytest-sugar==0.9.4
 requests
-Werkzeug==1.0.1
+Werkzeug==2.2.3
