@@ -1,4 +1,4 @@
-flask==1.1.2
+flask==2.3.2
 Flask-Cors==3.0.9
 gunicorn==20.0.4
 git+https://github.com/ICTLearningSciences/mentor-classifier.git@1.0.1
